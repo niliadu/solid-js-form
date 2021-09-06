@@ -25,7 +25,8 @@ const Input: Component<{name:string, label:string}> = (props) => {
       <label>{props.label}</label>
       <input
         value={field.value()}
-        use:formHandler
+        //@ts-ignore
+        use:formHandler //still need to properly type the handler
       />
       <span>{field.error()}</span>
     </>
@@ -86,11 +87,19 @@ const App: Component = () => {
         return (
           <>
             <label>Username</label>
-            <input value={form.values.username} use:formHandler />
+            <input 
+                value={form.values.username}
+                //@ts-ignore
+                use:formHandler
+            />
             <span>{usernameError()}</span>
             <br />
             <label>Passowrd</label>
-            <input value={form.values.password} use:formHandler />
+            <input 
+                value={form.values.password}
+                //@ts-ignore
+                use:formHandler 
+            />
             <span>{passwordError()}</span>
             <br />
             <button type="submit">Submit</button>
