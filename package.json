@@ -21,5 +21,12 @@
     "type": "git",
     "url": "git@github.com:niliadu/solid-js-form.git"
   },
-  "files": ["lib/*", "lib/**/*"]
+  "files": ["lib/*", "lib/**/*"],
+  "keywords": [
+    "solid",
+    "solidjs",
+    "solid-js",
+    "form",
+    "solid-form"
+  ]
 }
