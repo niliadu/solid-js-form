@@ -1,19 +1,25 @@
 {
   "name": "solid-js-form",
-  "version": "0.0.1",
+  "version": "0.1.1",
   "description": "Form library with Yup validation for Solid.JS",
-  "main": "lib/index.ts",
-  "types": "lib",
+  "main": "lib/index.jsx",
+  "types": "lib/types/index.d.ts",
   "scripts": {
-    "build": "tsc -p ."
+    "build": "rimraf ./lib/* && tsc -p ."
   },
   "author": "Wilton Silva",
   "license": "MIT",
   "devDependencies": {
+    "rimraf": "^3.0.2",
     "typescript": "^4.4.2"
   },
   "dependencies": {
     "solid-js": "^1.1.2",
     "yup": "^0.32.9"
-  }
+  },
+  "repository": {
+    "type": "git",
+    "url": "git@github.com:niliadu/solid-js-form.git"
+  },
+  "files": ["lib/*", "lib/**/*"]
 }

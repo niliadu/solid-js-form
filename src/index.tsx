@@ -6,6 +6,7 @@ import { ObjectShape } from "yup/lib/object";
 export namespace FormType {
   export type Touched<T> = { [Key in keyof T]: boolean };
   export type Errors<T> = { [Key in keyof T]: string };
+  export type ValidationSchema<T> = Partial<{ [Key in keyof T]: Yup.AnySchema }>;
 
   export interface Context<ValuesType = object> {
     initialValues: ValuesType;
@@ -27,7 +28,7 @@ export namespace FormType {
   export type Props<ValuesType = object> = {
     initialValues: ValuesType;
     onSubmit?: (form: Store<FormType.Context<ValuesType>>) => Promise<void>;
-    validation?: Partial<{ [Key in keyof ValuesType]: Yup.AnySchema }>;
+    validation?: FormType.ValidationSchema<ValuesType>;
   } & {
     children?:
       | JSXElement
@@ -67,7 +68,7 @@ export function Form<ValuesType extends object>(
       .validate(form.values, { abortEarly: false })
       .then(() => {
         setForm("isValid", true);
-        return {} as { [Key in keyof ValuesType]: string };
+        return {} as FormType.Errors<ValuesType>;
       })
       .catch((errors: Yup.ValidationError) => {
         setForm("isValid", false);
@@ -75,7 +76,7 @@ export function Form<ValuesType extends object>(
           .filter((ve) => !!ve.path)
           .reduce(
             (e, ve) => ({ ...e, [ve.path!]: ve.message }),
-            {} as { [Key in keyof ValuesType]: string }
+            {} as FormType.Errors<ValuesType>
           );
       });
   };
@@ -171,9 +172,9 @@ export function Form<ValuesType extends object>(
 export function useField(name: string) {
   const form = useContext(FormContext) as any;
 
-  const value = createMemo(() => form.values[name]);
-  const touched = createMemo(() => form.touched[name]);
-  const error = createMemo(() =>
+  const value = createMemo<any>(() => form.values[name]);
+  const touched = createMemo<boolean>(() => form.touched[name]);
+  const error = createMemo<string>(() =>
     touched() && form.errors[name] ? form.errors[name] : ""
   );
 
