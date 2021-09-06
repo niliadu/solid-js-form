@@ -1,4 +1,3 @@
-import React from "react";
 import { createContext, createMemo, JSXElement, useContext } from "solid-js";
 import { createStore, Store } from "solid-js/store";
 import * as Yup from "yup";
@@ -160,14 +159,11 @@ export function Form<ValuesType extends object>(
 
   return (
     <form onSubmit={onSubmit as any}>
-      <FormContext.Provider
-        value={form}
-        children={
-          typeof props.children == "function"
-            ? props.children(form)
-            : props.children
-        }
-      />
+      <FormContext.Provider value={form}>
+        {typeof props.children == "function"
+          ? props.children(form)
+          : props.children}
+      </FormContext.Provider>
     </form>
   );
 }
