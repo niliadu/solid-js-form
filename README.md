@@ -112,6 +112,54 @@ const App: Component = () => {
 
 render(() => <App />, document.getElementById("root"));
 ```
+## Api Reference
+- [useField](#useField)
+- [setValue](#setValue)
+- [setError](#setError)
+- [setValues](#setValues)
+- [setErrors](#setErrors)
+- [setTouched](#setTouched)
+- [handleChange](#handleChange)
+- [handleBlur](#handleBlur)
+- [formHandler](#formHandler)
+
+### useField
+`useField<ValuesType = any>(name: keyof  ValuesType): FormType.FieldHook<ValuesType>`
+Custom hook that will expose the Form API and some Solid.JS Accessors to some field states.
+
+### setValue
+`<Field extends keyof ValuesType>(field: Field, value: ValuesType[Field]) => void`
+Will set the value of the refered field
+
+### setError
+`(field: keyof ValuesType, error: string) => void`
+Will set the error message of the refered field
+
+### setValues
+`(values: Partial<ValuesType>) => void`
+Will set the value of the fields contained in the object provided
+
+### setErrors
+`(errors: Partial<Errors<ValuesType>>) => void`
+Will set the error message of the fields listed in the object.
+
+### setTouched
+`((field: keyof ValuesType, touched: boolean) => void) | ((touched: Partial<Touched<ValuesType>>) => void)`
+Will set the touched state of a single field when the field name is provided as first paramter. If the fisrt paramter is an object it will set the touched state of the fields listed in the object.
+
+### handleChange
+`(e: Event) => void`
+Change event handler that can be passed to any input event listener so the form state will be handled only when that event is triggered
+
+### handleBlur
+`(e: Event) => void`
+Blur event handler that can be passed to any input event listener so the form state will be handled only when that event is triggered
+
+### formHandler
+`(element: HTMLElement) => void`
+Solid Directive that simplifies the form event handling.
+#NOTE: The formHandler is not recognized by JSX TypeScript and so dar requires the use of //@ts-ignore
+
 
 ## License
 [MIT](https://choosealicense.com/licenses/mit/)

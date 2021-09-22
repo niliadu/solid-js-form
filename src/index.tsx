@@ -1,12 +1,31 @@
-import { createContext, createMemo, JSXElement, useContext } from "solid-js";
+import {
+  Accessor,
+  createContext,
+  createMemo,
+  JSXElement,
+  useContext,
+} from "solid-js";
 import { createStore, Store } from "solid-js/store";
 import * as Yup from "yup";
 import { ObjectShape } from "yup/lib/object";
 
 export namespace FormType {
-  export type Touched<T> = { [Key in keyof T]: boolean };
-  export type Errors<T> = { [Key in keyof T]: string };
-  export type ValidationSchema<T> = Partial<{ [Key in keyof T]: Yup.AnySchema }>;
+  export type Touched<T = Object> = { [Key in keyof T]: boolean };
+  export type Errors<T = Object> = { [Key in keyof T]: string };
+  export type ValidationSchema<T = Object> = Partial<
+    { [Key in keyof T]: Yup.AnySchema }
+  >;
+
+  export type FieldHook<ValuesType = object> = {
+    field: FieldAccessor<ValuesType>;
+    form: Context<ValuesType>;
+  };
+
+  export type FieldAccessor<ValuesType = object> = {
+    value: Accessor<ValuesType[keyof ValuesType]>;
+    touched: Accessor<boolean>;
+    error: Accessor<string>;
+  };
 
   export interface Context<ValuesType = object> {
     initialValues: ValuesType;
@@ -19,7 +38,12 @@ export namespace FormType {
       field: Field,
       value: ValuesType[Field]
     ) => void;
-    setValues: (value: Partial<ValuesType>) => void;
+    setError: (field: keyof ValuesType, error: string) => void;
+    setValues: (values: Partial<ValuesType>) => void;
+    setTouched:
+      | ((field: keyof ValuesType, touched: boolean) => void)
+      | ((touched: Partial<Touched<ValuesType>>) => void);
+    setErrors: (errors: Partial<Errors<ValuesType>>) => void;
     handleChange: (e: Event) => void;
     handleBlur: (e: Event) => void;
     formHandler: (element: HTMLElement) => void;
@@ -50,11 +74,37 @@ export function Form<ValuesType extends object>(
     {} as FormType.Errors<ValuesType>
   );
 
-  const setValue: FormType.Context["setValue"] = (field: any, value) => {
+  const setValue: FormType.Context<ValuesType>["setValue"] = (
+    field: any,
+    value
+  ) => {
     setForm("values", field, value);
   };
-  const setValues: FormType.Context["setValues"] = (values) => {
-    setForm("values", values);
+  const setValues: FormType.Context<ValuesType>["setValues"] = (values) => {
+    setForm("values", (v) => ({ ...v, ...values }));
+  };
+
+  const setError: FormType.Context<ValuesType>["setError"] = (
+    field: any,
+    error
+  ) => {
+    setForm("errors", field, error);
+  };
+  const setErrors: FormType.Context["setErrors"] = (errors) => {
+    setForm("errors", (e: any) => ({ ...e, ...errors }));
+  };
+
+  const setTouched: FormType.Context<ValuesType>["setTouched"] = (
+    ...args: any[]
+  ) => {
+    if (typeof args[0] == "string") {
+      const field = args[0] as keyof ValuesType;
+      const touched = !!args[1] || false;
+      setForm("touched", field, touched);
+    } else {
+      const touched = (args[0] || {}) as Partial<FormType.Touched<ValuesType>>;
+      setForm("touched", (t: any) => ({ ...t, ...touched }));
+    }
   };
 
   const validateForm = async (
@@ -128,7 +178,10 @@ export function Form<ValuesType extends object>(
     isSubmitting: false,
     isValid: false,
     setValue,
+    setError,
     setValues,
+    setErrors,
+    setTouched,
     handleChange,
     handleBlur,
     formHandler,
@@ -169,10 +222,10 @@ export function Form<ValuesType extends object>(
   );
 }
 
-export function useField(name: string) {
-  const form = useContext(FormContext) as any;
+export function useField<ValuesType = any>(name: keyof ValuesType): FormType.FieldHook<ValuesType> {
+  const form = useContext<FormType.Context<ValuesType>>(FormContext as any);
 
-  const value = createMemo<any>(() => form.values[name]);
+  const value = createMemo<ValuesType[typeof name]>(() => form.values[name]);
   const touched = createMemo<boolean>(() => form.touched[name]);
   const error = createMemo<string>(() =>
     touched() && form.errors[name] ? form.errors[name] : ""
