@@ -13,7 +13,7 @@ npm install solid-js-form
 ```js
 import { Component } from "solid-js";
 import { render } from "solid-js/web";
-import { useField, Form } from "solid-js";
+import { useField, Form } from "solid-js-form";
 import * as Yup from 'yup';
 
 const Input: Component<{name:string, label:string}> = (props) => {
