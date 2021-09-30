@@ -57,7 +57,7 @@ Alternative
 ```js
 import { Component, createMemo } from "solid-js";
 import { render } from "solid-js/web";
-import { Form } from "solid-js";
+import { Form } from "solid-js-form";
 import * as Yup from "yup";
 
 const App: Component = () => {
