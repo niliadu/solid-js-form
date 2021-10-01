@@ -22,7 +22,10 @@ const Input: Component<{name:string, label:string}> = (props) => {
   
   return (
     <>
-      <label>{props.label}</label>
+      <label for={props.id}>
+        {props.label}
+        {field.required() ? " *" : ""}
+      </label>
       <input
         value={field.value()}
         //@ts-ignore
