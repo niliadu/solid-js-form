@@ -10,28 +10,31 @@ import * as Yup from "yup";
 import { ObjectShape } from "yup/lib/object";
 
 export namespace FormType {
-  export type Touched<T = Object> = { [Key in keyof T]: boolean };
-  export type Errors<T = Object> = { [Key in keyof T]: string };
-  export type ValidationSchema<T = Object> = Partial<
-    { [Key in keyof T]: Yup.AnySchema }
-  >;
+  export type Touched<T extends object = any> = { [Key in keyof T]: boolean };
+  export type Errors<T extends object = any> = { [Key in keyof T]: string };
+  export type Required<T extends object = any> = { [Key in keyof T]: boolean };
+  export type ValidationSchema<T extends object = any> = Partial<{
+    [Key in keyof T]: Yup.AnySchema;
+  }>;
 
-  export type FieldHook<ValuesType = object> = {
+  export type FieldHook<ValuesType extends object = any> = {
     field: FieldAccessor<ValuesType>;
     form: Context<ValuesType>;
   };
 
-  export type FieldAccessor<ValuesType = object> = {
+  export type FieldAccessor<ValuesType extends object = any> = {
     value: Accessor<ValuesType[keyof ValuesType]>;
     touched: Accessor<boolean>;
     error: Accessor<string>;
+    required: Accessor<boolean>;
   };
 
-  export interface Context<ValuesType = object> {
+  export interface Context<ValuesType extends object = any> {
     initialValues: ValuesType;
     values: ValuesType;
     touched: Touched<ValuesType>;
     errors: Errors<ValuesType>;
+    required: Required<ValuesType>;
     isSubmitting: boolean;
     isValid: boolean;
     setValue: <Field extends keyof ValuesType>(
@@ -49,7 +52,7 @@ export namespace FormType {
     formHandler: (element: HTMLElement) => void;
   }
 
-  export type Props<ValuesType = object> = {
+  export type Props<ValuesType extends object = any> = {
     initialValues: ValuesType;
     onSubmit?: (form: Store<FormType.Context<ValuesType>>) => Promise<void>;
     validation?: FormType.ValidationSchema<ValuesType>;
@@ -73,6 +76,18 @@ export function Form<ValuesType extends object>(
     (e, f) => ({ ...e, [f]: "" }),
     {} as FormType.Errors<ValuesType>
   );
+
+  const required = Object.keys(props.initialValues).reduce((e, f) => {
+    let isRequired = false;
+    const validationFields = Yup.object()
+      .shape(props.validation as ObjectShape)
+      .describe().fields;
+    if (Object.keys(validationFields || {}).length) {
+      const field = validationFields[f] as any;
+      isRequired = !!field?.tests.find(({ name }: any) => name === "required");
+    }
+    return { ...e, [f]: isRequired };
+  }, {} as FormType.Required<ValuesType>);
 
   const setValue: FormType.Context<ValuesType>["setValue"] = (
     field: any,
@@ -175,6 +190,7 @@ export function Form<ValuesType extends object>(
     values: props.initialValues,
     touched,
     errors,
+    required,
     isSubmitting: false,
     isValid: false,
     setValue,
@@ -213,7 +229,7 @@ export function Form<ValuesType extends object>(
 
   return (
     <form onSubmit={onSubmit as any}>
-      <FormContext.Provider value={form}>
+      <FormContext.Provider value={form as any}>
         {typeof props.children == "function"
           ? props.children(form)
           : props.children}
@@ -222,7 +238,9 @@ export function Form<ValuesType extends object>(
   );
 }
 
-export function useField<ValuesType = any>(name: keyof ValuesType): FormType.FieldHook<ValuesType> {
+export function useField<ValuesType extends object = any>(
+  name: keyof ValuesType
+): FormType.FieldHook<ValuesType> {
   const form = useContext<FormType.Context<ValuesType>>(FormContext as any);
 
   const value = createMemo<ValuesType[typeof name]>(() => form.values[name]);
@@ -230,6 +248,7 @@ export function useField<ValuesType = any>(name: keyof ValuesType): FormType.Fie
   const error = createMemo<string>(() =>
     touched() && form.errors[name] ? form.errors[name] : ""
   );
+  const required = createMemo<boolean>(() => form.required[name]);
 
-  return { field: { value, touched, error }, form };
+  return { field: { value, touched, error, required }, form };
 }
