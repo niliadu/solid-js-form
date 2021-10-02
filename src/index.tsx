@@ -77,16 +77,16 @@ export function Form<ValuesType extends object>(
     {} as FormType.Errors<ValuesType>
   );
 
-  const required = Object.keys(props.initialValues).reduce((e, f) => {
+  const required = Object.keys(props.initialValues).reduce((r, f) => {
     let isRequired = false;
     const validationFields = Yup.object()
-      .shape(props.validation as ObjectShape)
+      .shape(props.validation || {})
       .describe().fields;
-    if (Object.keys(validationFields || {}).length) {
+    if (Object.keys(validationFields).length) {
       const field = validationFields[f] as any;
       isRequired = !!field?.tests.find(({ name }: any) => name === "required");
     }
-    return { ...e, [f]: isRequired };
+    return { ...r, [f]: isRequired };
   }, {} as FormType.Required<ValuesType>);
 
   const setValue: FormType.Context<ValuesType>["setValue"] = (
@@ -127,9 +127,8 @@ export function Form<ValuesType extends object>(
   ): Promise<FormType.Errors<ValuesType>> => {
     if (!props.validation) return {} as { [Key in keyof ValuesType]: string };
 
-    const schema = Yup.object().shape(props.validation as ObjectShape);
-
-    return schema
+    return Yup.object()
+      .shape(props.validation as ObjectShape)
       .validate(form.values, { abortEarly: false })
       .then(() => {
         setForm("isValid", true);
@@ -146,36 +145,19 @@ export function Form<ValuesType extends object>(
       });
   };
 
-  const validateField = async (
-    field: keyof ValuesType,
-    value: any
-  ): Promise<string> => {
-    if (!props.validation?.[field]) return "";
-
-    const schema = Yup.object().shape(props.validation as ObjectShape);
-
-    return schema
-      .validateAt(field as string, { [field]: value })
-      .then(() => {
-        return "";
-      })
-      .catch((error: Yup.ValidationError) => {
-        return error.message || "";
-      });
-  };
-
   const handleChange: FormType.Context["handleChange"] = async (e) => {
-    const target: any = e.target || e.currentTarget;
+    const target = e.target || e.currentTarget || ({} as any);
     if (typeof target.name == "undefined") {
       console.error("Event target does not have an name property", e);
       return;
     }
-
     const field = target.name;
     const value = target.value;
-    setForm("values", field, value);
-    setForm("touched", field, true);
-    setForm("errors", field, await validateField(field, value));
+    const newForm = { ...form };
+    newForm.values = { ...form.values, [field]: value };
+    newForm.touched = { ...form.touched, [field]: true };
+    newForm.errors = { ...form.errors, ...(await validateForm(newForm)) };
+    setForm((f) => ({ ...f, ...newForm }));
   };
 
   const handleBlur: FormType.Context["handleBlur"] = handleChange;
