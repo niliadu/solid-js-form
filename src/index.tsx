@@ -156,7 +156,7 @@ export function Form<ValuesType extends object>(
     const newForm = { ...form };
     newForm.values = { ...form.values, [field]: value };
     newForm.touched = { ...form.touched, [field]: true };
-    newForm.errors = { ...form.errors, ...(await validateForm(newForm)) };
+    newForm.errors = await validateForm(newForm) as any;
     setForm((f) => ({ ...f, ...newForm }));
   };
 
