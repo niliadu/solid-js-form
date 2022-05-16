@@ -22,11 +22,12 @@ const Input: Component<{name:string, label:string}> = (props) => {
   
   return (
     <>
-      <label for={props.id}>
+      <label for={props.name}>
         {props.label}
         {field.required() ? " *" : ""}
       </label>
       <input
+        name={props.name}
         value={field.value()}
         //@ts-ignore
         use:formHandler //still need to properly type the handler
