@@ -2,6 +2,7 @@ import {
   Accessor,
   createContext,
   createMemo,
+  JSX,
   JSXElement,
   useContext,
 } from "solid-js";
@@ -60,7 +61,7 @@ export namespace FormType {
     children?:
       | JSXElement
       | ((form: Store<FormType.Context<ValuesType>>) => JSXElement);
-  };
+  } & JSX.FormHTMLAttributes<HTMLFormElement>;
 }
 
 const FormContext = createContext({} as FormType.Context);
@@ -68,19 +69,20 @@ const FormContext = createContext({} as FormType.Context);
 export function Form<ValuesType extends object>(
   props: FormType.Props<ValuesType>
 ) {
-  const touched = Object.keys(props.initialValues).reduce(
+  const {initialValues, validation, ...attrs} = props;
+  const touched = Object.keys(initialValues).reduce(
     (t, f) => ({ ...t, [f]: false }),
     {} as FormType.Touched<ValuesType>
   );
-  const errors = Object.keys(props.initialValues).reduce(
+  const errors = Object.keys(initialValues).reduce(
     (e, f) => ({ ...e, [f]: "" }),
     {} as FormType.Errors<ValuesType>
   );
 
-  const required = Object.keys(props.initialValues).reduce((r, f) => {
+  const required = Object.keys(initialValues).reduce((r, f) => {
     let isRequired = false;
     const validationFields = Yup.object()
-      .shape(props.validation || {})
+      .shape(validation || {})
       .describe().fields;
     if (Object.keys(validationFields).length) {
       const field = validationFields[f] as any;
@@ -125,10 +127,10 @@ export function Form<ValuesType extends object>(
   const validateForm = async (
     form: Store<FormType.Context<ValuesType>>
   ): Promise<FormType.Errors<ValuesType>> => {
-    if (!props.validation) return {} as { [Key in keyof ValuesType]: string };
+    if (!validation) return {} as { [Key in keyof ValuesType]: string };
 
     return Yup.object()
-      .shape(props.validation as ObjectShape)
+      .shape(validation as ObjectShape)
       .validate(form.values, { abortEarly: false })
       .then(() => {
         setForm("isValid", true);
@@ -168,8 +170,8 @@ export function Form<ValuesType extends object>(
   };
 
   const [form, setForm] = createStore<FormType.Context<ValuesType>>({
-    initialValues: props.initialValues,
-    values: props.initialValues,
+    initialValues: initialValues,
+    values: initialValues,
     touched,
     errors,
     required,
@@ -190,7 +192,7 @@ export function Form<ValuesType extends object>(
 
     const newForm = { ...form };
     newForm.isSubmitting = true;
-    newForm.touched = Object.keys(props.initialValues).reduce(
+    newForm.touched = Object.keys(initialValues).reduce(
       (t, f) => ({ ...t, [f]: true }),
       {} as any
     );
@@ -210,7 +212,7 @@ export function Form<ValuesType extends object>(
   };
 
   return (
-    <form onSubmit={onSubmit as any}>
+    <form onSubmit={onSubmit as any} {...attrs}>
       <FormContext.Provider value={form as any}>
         {typeof props.children == "function"
           ? props.children(form)
