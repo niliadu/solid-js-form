@@ -1,6 +1,6 @@
 {
   "name": "solid-js-form",
-  "version": "0.1.6",
+  "version": "0.1.7",
   "description": "Form library with Yup validation for Solid.JS",
   "main": "lib/index.jsx",
   "types": "lib/types/index.d.ts",
