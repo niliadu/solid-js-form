@@ -1,4 +1,4 @@
-import { Accessor, createContext, createMemo, JSX, JSXElement, useContext } from "solid-js";
+import { Accessor, createContext, createMemo, JSX, JSXElement, useContext, splitProps } from "solid-js";
 import { createStore, Store } from "solid-js/store";
 import * as Yup from "yup";
 import { ObjectShape } from "yup/lib/object";
@@ -68,7 +68,7 @@ export namespace FormType {
 const FormContext = createContext({} as FormType.Context);
 
 export function Form<ValuesType extends object>(props: FormType.Props<ValuesType>) {
-  const { initialValues, validation, ...attrs } = props;
+  const [{ initialValues, validation }, attrs] = splitProps(props, ["initialValues", "validation"]);
   const touched = Object.keys(initialValues).reduce(
     (t, f) => ({ ...t, [f]: false }),
     {} as FormType.Touched<ValuesType>
